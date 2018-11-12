@@ -46,9 +46,11 @@ static const MapEntryType PROGMEM ConfigurationMap[] = {
 #ifdef CONFIG_SL2S2002_SUPPORT
 	{ .Id = CONFIG_SL2S2002,	.Text = "SL2S2002" },
 #endif
-
 #ifdef CONFIG_TITAGITSTANDARD_SUPPORT
 	{ .Id = CONFIG_TITAGITSTANDARD,	.Text = "TITAGITSTANDARD" },
+#endif
+#ifdef CONFIG_EM4233_SUPPORT
+	{ .Id = CONFIG_EM4233,	.Text = "EM4233" },
 #endif
 };
 
@@ -302,6 +304,23 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 		.ReadOnly = false
     },
 #endif
+#ifdef CONFIG_EM4233_SUPPORT
+    [CONFIG_EM4233] = {
+    	.CodecInitFunc = ISO15693CodecInit,
+    	.CodecDeInitFunc = ISO15693CodecDeInit,
+		.CodecTaskFunc = ISO15693CodecTask,
+		.ApplicationInitFunc = EM4233AppInit,
+		.ApplicationResetFunc = EM4233AppReset,
+		.ApplicationTaskFunc = EM4233AppTask,
+		.ApplicationTickFunc = EM4233AppTick,
+		.ApplicationProcessFunc = EM4233AppProcess,
+		.ApplicationGetUidFunc = EM4233GetUid,
+		.ApplicationSetUidFunc = EM4233SetUid,
+		.UidSize = TITAGIT_STD_UID_SIZE,
+		.MemorySize = TITAGIT_STD_MEM_SIZE,
+		.ReadOnly = false
+    },
+#endif
 };
 
 ConfigurationType ActiveConfiguration;
@@ -352,4 +371,3 @@ void ConfigurationGetList(char* List, uint16_t BufferSize)
 {
     MapToString(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), List, BufferSize);
 }
-

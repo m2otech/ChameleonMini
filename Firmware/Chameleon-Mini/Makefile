@@ -1,7 +1,7 @@
 # This makefile uses sh in order to build the project.
-# Note when using AVR-Toolchain, you have to install cygwin and 
-# append cygwin's bin directory to the PATH environment variable 
-# because Atmel does not ship sh.exe anymore with the toolchain. 
+# Note when using AVR-Toolchain, you have to install cygwin and
+# append cygwin's bin directory to the PATH environment variable
+# because Atmel does not ship sh.exe anymore with the toolchain.
 SHELL = /bin/sh
 
 #Supported configurations
@@ -9,12 +9,13 @@ SETTINGS    += -DCONFIG_MF_CLASSIC_1K_SUPPORT
 SETTINGS    += -DCONFIG_MF_CLASSIC_1K_7B_SUPPORT
 SETTINGS    += -DCONFIG_MF_CLASSIC_4K_SUPPORT
 SETTINGS    += -DCONFIG_MF_CLASSIC_4K_7B_SUPPORT
-SETTINGS    += -DCONFIG_MF_ULTRALIGHT_SUPPORT 
+SETTINGS    += -DCONFIG_MF_ULTRALIGHT_SUPPORT
 SETTINGS	+= -DCONFIG_ISO14443A_SNIFF_SUPPORT
 SETTINGS	+= -DCONFIG_ISO14443A_READER_SUPPORT
 SETTINGS	+= -DCONFIG_VICINITY_SUPPORT
 SETTINGS	+= -DCONFIG_SL2S2002_SUPPORT
 SETTINGS	+= -DCONFIG_TITAGITSTANDARD_SUPPORT
+SETTINGS	+= -DCONFIG_EM4233_SUPPORT
 SETTINGS	+= -DCONFIG_ISO15693_SNIFF_SUPPORT
 
 #Support magic mode on mifare classic configuration
@@ -43,7 +44,7 @@ SETTINGS	+= -DDEFAULT_RBUTTON_ACTION=BUTTON_ACTION_CYCLE_SETTINGS
 #SETTINGS	+= -DDEFAULT_RBUTTON_ACTION=BUTTON_ACTION_STORE_MEM
 SETTINGS	+= -DDEFAULT_LBUTTON_ACTION=BUTTON_ACTION_RECALL_MEM
 
-#Define if button action setting should be independent of active setting 
+#Define if button action setting should be independent of active setting
 SETTINGS	+= -DBUTTON_SETTING_GLOBAL
 
 #Default LED functions
@@ -99,13 +100,13 @@ SRC         += Terminal/Terminal.c Terminal/Commands.c Terminal/XModem.c Termina
 SRC         += Codec/Codec.c Codec/ISO14443-2A.c Codec/Reader14443-2A.c Codec/SniffISO14443-2A.c Codec/Reader14443-ISR.S
 SRC         += Application/MifareUltralight.c Application/MifareClassic.c Application/ISO14443-3A.c Application/Crypto1.c Application/Reader14443A.c Application/Sniff14443A.c
 SRC         += Codec/ISO15693.c
-SRC         += Application/Vicinity.c Application/Sl2s2002.c Application/TITagitstandard.c Application/ISO15693-A.c
+SRC         += Application/Vicinity.c Application/Sl2s2002.c Application/TITagitstandard.c Application/EM4233.c Application/ISO15693-A.c
 SRC         += $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 LUFA_PATH    = ../LUFA
 CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) -DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS)
 LD_FLAGS     = -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
 OBJDIR       = Bin
-OBJECT_FILES = 
+OBJECT_FILES =
 
 
 #AVRDUDE settings
@@ -148,8 +149,8 @@ include $(LUFA_PATH)/Build/lufa_cppcheck.mk
 spmhelper: $(TARGET).elf
 	@echo $(MSG_OBJCPY_CMD) Extracting SPM helper HEX file from $(TARGET).elf
 	$(CROSS)-objcopy -O ihex -j .spmhelper $(SPM_HELPER_OBJCOPY) $(TARGET).elf $(TARGET).hex
-		
-# Program the device using avrdude  
+
+# Program the device using avrdude
 program: $(TARGET).hex $(TARGET).eep
 	avrdude $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_APP) $(AVRDUDE_WRITE_EEPROM)
 
