@@ -27,7 +27,9 @@ static enum {
 //UID = E0 16 .. .. .. .. .. ..
 //0xE0 = iso15693
 //0x16 = em microelectronic
-ISO15693UidType Uid = {0x42, 0x60, 0x8E, 0x09, 0x01, 0x28, 0x16, 0xE0};
+//ISO15693UidType Uid = {0x42, 0x60, 0x8E, 0x09, 0x01, 0x28, 0x16, 0xE0};
+ISO15693UidType Uid = {0xE0, 0x16, 0x28, 0x01, 0x09, 0x8E, 0x60, 0x42};
+
 // TODO Do not hardcode UID...
 
 void EM4233AppInit(void)
@@ -70,7 +72,6 @@ uint16_t EM4233AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
                     FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_INVENTORY_DSFID;
                     ISO15693CopyUid(&FrameBuf[ISO15693_RES_ADDR_PARAM + 0x01], Uid);
                     ResponseByteCount = 10;
-
                 } else if (Command == ISO15693_CMD_STAY_QUIET) {
                     if (ISO15693Addressed(FrameBuf) && ISO15693CompareUid(&FrameBuf[ISO15693_REQ_ADDR_PARAM], Uid))
                         State = STATE_QUIET;
@@ -89,7 +90,7 @@ uint16_t EM4233AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
 
           					if (PageAddress >= EM4233_NUMBER_OF_SECTORS) { /* the reader is requesting a sector out of bound */
           						  FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
-          						  FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_BLK_NOT_AVL; /* real TiTag standard reply with this error */
+          						  FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_BLK_NOT_AVL;
           						  ResponseByteCount = 2;
           						  break;
           					}
@@ -105,49 +106,48 @@ uint16_t EM4233AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
   			                FramePtr = FrameBuf + 1;
                         ResponseByteCount = 5;
                     }
-  		              MemoryReadBlock(FramePtr, PageAddress * TITAGIT_BYTES_PER_PAGE, TITAGIT_BYTES_PER_PAGE);
+  		              MemoryReadBlock(FramePtr, PageAddress * EM4233_BYTES_PER_PAGE, EM4233_BYTES_PER_PAGE);
                 }
 
 
-            	else if (Command == ISO15693_CMD_WRITE_SINGLE) {
-					           uint8_t* Dataptr;
-					uint8_t PageAddress;
+            	  else if (Command == ISO15693_CMD_WRITE_SINGLE) {
+					          uint8_t* Dataptr;
+					          uint8_t PageAddress;
 
                     if (ISO15693Addressed(FrameBuf)) {
                         if (ISO15693CompareUid(&FrameBuf[ISO15693_REQ_ADDR_PARAM], Uid)) {/* write is addressed to us */
                             /* pick block 2 + 8 (UID Lenght) */
                             PageAddress = FrameBuf[ISO15693_REQ_ADDR_PARAM + 0x08]; /*when receiving an addressed request pick block number from 10th byte in the request*/
-						    /* pick block 2 + 8 (UID Lenght) + 1 (data starts here) */
+						                /* pick block 2 + 8 (UID Lenght) + 1 (data starts here) */
                             Dataptr = &FrameBuf[ISO15693_REQ_ADDR_PARAM + 0x08 + 0x01]; /* addr of sent data to write in memory */
                         }
                         else /* we are not the addressee of the write command */
                             break;
-		            } else { /* request is not addressed */
-			            PageAddress = FrameBuf[ISO15693_REQ_ADDR_PARAM];
+		                } else { /* request is not addressed */
+			                  PageAddress = FrameBuf[ISO15693_REQ_ADDR_PARAM];
                         Dataptr = &FrameBuf[ISO15693_REQ_ADDR_PARAM + 0x01];
                     }
 
-					MemoryWriteBlock(Dataptr, PageAddress * EM4233_BYTES_PER_PAGE, EM4233_BYTES_PER_PAGE);
-					FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR;
-					ResponseByteCount = 1;
-				}
+					      MemoryWriteBlock(Dataptr, PageAddress * EM4233_BYTES_PER_PAGE, EM4233_BYTES_PER_PAGE);
+					      FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR;
+					      ResponseByteCount = 1;
+				    }
                 break;
-            case STATE_SELECTED:
-                /* TODO: Selected has to be impemented altogether */
-                break;
+                case STATE_SELECTED:
+                    /* TODO: Selected has to be impemented altogether */
+                    break;
 
-            case STATE_QUIET:
-                if (Command == ISO15693_CMD_RESET_TO_READY) {
-                    if (ISO15693Addressed(FrameBuf)) {
-                        FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR;
-                        ResponseByteCount = 1;
-                        State = STATE_READY;
+                case STATE_QUIET:
+                    if (Command == ISO15693_CMD_RESET_TO_READY) {
+                        if (ISO15693Addressed(FrameBuf)) {
+                            FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR;
+                            ResponseByteCount = 1;
+                            State = STATE_READY;
+                        }
                     }
-                }
-                break;
-
-            default:
-                break;
+                    break;
+                default:
+                    break;
             }
 
             if (ResponseByteCount > 0) {
@@ -164,11 +164,12 @@ uint16_t EM4233AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
     } else { // Min frame size not met
         return ISO15693_APP_NO_RESPONSE;
     }
-
 }
 
-void EM4233GetUid(ConfigurationUidType Uid)
+void EM4233GetUid(ConfigurationUidType Uid2)
 {
+    memcpy(Uid2, Uid, sizeof(ConfigurationUidType));
+
     // TODO EM4233
 
     //MemoryReadBlock(&Uid[0], TITAGIT_MEM_UID_ADDRESS, ActiveConfiguration.UidSize);
@@ -177,12 +178,12 @@ void EM4233GetUid(ConfigurationUidType Uid)
     //EM4233FlipUid(Uid);
 }
 
-void EM4233SetUid(ConfigurationUidType Uid)
+void EM4233SetUid(ConfigurationUidType Uid2)
 {
     // TODO EM4233
     // Reverse UID before writing it
-    //EM4233FlipUid(Uid);
-
+    EM4233FlipUid(Uid);
+    memcpy(Uid, Uid2, sizeof(ConfigurationUidType));
     //MemoryWriteBlock(Uid, TITAGIT_MEM_UID_ADDRESS, ActiveConfiguration.UidSize);
 }
 
