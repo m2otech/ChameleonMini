@@ -189,10 +189,11 @@ void EM4233SetUid(ConfigurationUidType Uid2)
 
 void EM4233FlipUid(ConfigurationUidType Uid)
 {
-    uint8_t UidTemp[ActiveConfiguration.UidSize];
-    int i;
-    for (i = 0; i < ActiveConfiguration.UidSize; i++)
-        UidTemp[i] = Uid[i];
-    for (i = 0; i < ActiveConfiguration.UidSize; i++)
-        Uid[i] = UidTemp[ActiveConfiguration.UidSize - i - 1];
+    uint8_t tmp, *tail;
+    tail = Uid + ActiveConfiguration.UidSize - 1;
+    while ( Uid < tail ) {
+        tmp = *Uid;
+        *Uid++ = *tail;
+        *tail-- = tmp;
+    }
 }
