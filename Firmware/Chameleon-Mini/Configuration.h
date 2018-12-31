@@ -55,9 +55,19 @@ typedef enum  {
 #ifdef CONFIG_TITAGITSTANDARD_SUPPORT
 	CONFIG_TITAGITSTANDARD,
 #endif
+#ifdef CONFIG_EM4233_SUPPORT
+	CONFIG_EM4233,
+#endif
     /* This HAS to be the last element */
     CONFIG_COUNT
 } ConfigurationEnum;
+
+/** Tag Family definitions **/
+#define TAG_FAMILY_NONE      0
+#define TAG_FAMILY_ISO14443A 1
+#define TAG_FAMILY_ISO14443B 2
+#define TAG_FAMILY_ISO15693  5
+
 
 /** With this `struct` the behavior of a configuration is defined. */
 typedef struct {
@@ -136,6 +146,10 @@ typedef struct {
      * Implies whether the Memory can be changed.
      */
     bool ReadOnly;
+    /**
+     * Specify tag family - see the defines above.
+     */
+    uint8_t TagFamily;
 
 } ConfigurationType;
 
